@@ -24,10 +24,37 @@ object GameEngine {
     cards
   }
 
-  def winnerByCards(cards: Seq[Card]): Seq[Int] = {
-    val max = cards.maxBy(c => c.rank.ordinal())
-    val maxCards = cards.filter(c => c.rank == max.rank)
-    maxCards.map(c => cards.indexOf(c))
+  def winnerByCards(cards: Seq[Seq[Card]]): Seq[Int] = {
+    val longestSize = cards.map(_.size).max
+    val longest = cards.filter(_.size == longestSize)
+    // last man standing
+    if (longest.size == 1) {
+      Seq(cards.indexOf(longest.head))
+    } else {
+
+      val lastCards = cards.map { c =>
+        if (c.size == longestSize) {
+          Some(c.last)
+        } else {
+          None
+        }
+      }
+          val max = lastCards.maxBy(_ match {
+            case Some(c) => c.rank.ordinal()
+            case None => -1
+          }).map(_.rank)
+
+          val maxCards = lastCards.filter(_ match {
+            case Some(c) => Some(c.rank) == max
+            case None => false
+          })
+
+      val winners = maxCards.map { c =>
+        lastCards.indexOf(c)
+      }
+
+      winners
+    }
   }
 
   def winnerByNumberOfCards(numberOfCards: Seq[Int]): Int = {

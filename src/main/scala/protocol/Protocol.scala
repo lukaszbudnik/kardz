@@ -19,8 +19,3 @@ case object CountCards
 case class NumberOfCards(n: Int)
 
 case class Winner(player: Int)
-
-// in case there is a draw Referee should ask for one hidden and one normal card
-case object AskForHiddenCard
-
-case class GiveHiddenCard(card: Card)

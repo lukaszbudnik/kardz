@@ -87,6 +87,34 @@ class RefereeSpec extends Specification {
         p2.expectMsg(AskForCard)
       }
 
+      "receive cards & ask for two more cards when war" in new AkkaTestkitSpecs2 {
+        val p1 = TestProbe()
+        val p2 = TestProbe()
+        val p3 = TestProbe()
+        val listener = TestProbe()
+
+        val refereeRef = TestActorRef(Props(new Referee(Seq(p1.ref, p2.ref, p3.ref), listener.ref)))
+
+        val c1 = Card(Rank.JACK, Colour.HEARTS)
+        val c2 = Card(Rank.FIVE, Colour.DIAMONDS)
+        val c3 = Card(Rank.JACK, Colour.CLUBS)
+
+        // explicit tell method invocation with sender param
+        refereeRef.tell(GiveCard(c1), p1.ref)
+        refereeRef.tell(GiveCard(c2), p2.ref)
+        refereeRef.tell(GiveCard(c3), p3.ref)
+
+        // player 1 and player 3 - war
+        // referee asks for 2 more cards
+        p1.expectMsg(AskForCard)
+        p1.expectMsg(AskForCard)
+
+        p3.expectMsg(AskForCard)
+        p3.expectMsg(AskForCard)
+
+        p2.expectNoMsg
+      }
+
       "ask to count cards if max rounds got" in new AkkaTestkitSpecs2 {
         val p1 = TestProbe()
         val p2 = TestProbe()
