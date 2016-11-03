@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'scala'
+}
+
+group = 'com.github.lukaszbudnik.kardz'
+archivesBaseName = 'kardz'
+version = '0.0.1'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url 'http://repository.apache.org/content/repositories/snapshots'
+    }
+
+}
+
+dependencies {
+    compile 'org.scala-lang:scala-library:2.11.6'
+    compile 'org.scala-lang:scala-compiler:2.11.6'
+    compile 'com.typesafe.akka:akka-actor_2.11:2.4.12'
+    compile 'com.typesafe.akka:akka-testkit_2.11:2.4.12'
+
+    testCompile 'org.specs2:specs2-core_2.11:3.7.1'
+    testCompile 'org.specs2:specs2-junit_2.11:3.7.1'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events 'failed', 'passed'
+        showStandardStreams true
+    }
+}
