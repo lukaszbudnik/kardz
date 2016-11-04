@@ -16,6 +16,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor {
   var roundCounter = 0
   var atWarCounter = 0
   var currentWarRound: mutable.Map[ActorRef, Int] = mutable.Map()
+  var finished = false
 
   override def receive: Receive = {
     case Distribute => {
@@ -44,9 +45,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor {
         currentWarRound += (sender -> 2)
       }
 
-      if (activePlayers.size > 1) {
-        self ! Check
-      }
+      self ! Check
 
     }
     case GiveCard(c) => {
@@ -74,7 +73,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor {
         listener ! Winner(players.indexOf(activePlayers(index)))
       }
     }
-    case Check if (activePlayers.size == currentRound.size && atWarCounter == 0) || (currentWarRound.values.sum / 2 == atWarCounter && atWarCounter > 0) => {
+    case Check if !finished && ((activePlayers.size == currentRound.size && atWarCounter == 0) || (currentWarRound.values.sum / 2 == atWarCounter && atWarCounter > 0)) => {
       val cards = currentRound.values.toSeq
 
       val index = GameEngine.winnerByCards(cards)
@@ -109,6 +108,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor {
 
     if (activePlayers.size == 1) {
       println(s"Round $roundCounter last player standing $winner from $sender")
+      finished = true
       listener ! Winner(players.indexOf(activePlayers.head))
     } else {
 
