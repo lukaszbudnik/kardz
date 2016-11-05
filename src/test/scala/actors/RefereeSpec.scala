@@ -56,8 +56,10 @@ class RefereeSpec extends Specification {
         refereeRef.tell(NoCard, p1.ref)
         refereeRef.tell(NoCard, p2.ref)
 
-        // player 3 won (index 2)
-        listener.expectMsg(Winner(2))
+        refereeRef.tell(GiveCard(Card(Rank.TWO, Colour.DIAMONDS)), p3.ref)
+
+        // player 3 won
+        listener.expectMsg(Winner(p3.ref.path.toString))
       }
 
       "receive cards & send results to round winner" in new AkkaTestkitSpecs2 {
@@ -139,4 +141,3 @@ class RefereeSpec extends Specification {
     }
 
   }
-

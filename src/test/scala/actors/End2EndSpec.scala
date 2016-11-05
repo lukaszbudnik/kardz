@@ -5,6 +5,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
 import org.specs2.runner.JUnitRunner
 import protocol._
+import scala.concurrent.duration._
 
 @RunWith(classOf[JUnitRunner])
 class End2EndSpec extends Specification {
@@ -25,9 +26,7 @@ class End2EndSpec extends Specification {
       refereeRef ! Distribute
       refereeRef ! Start
 
-      Thread.sleep(10 * 1000)
-
+      awaitCond(system.isTerminated, 10.seconds, 1.second)
     }
   }
 }
-

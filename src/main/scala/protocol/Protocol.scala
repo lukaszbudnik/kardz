@@ -18,4 +18,4 @@ case object CountCards
 
 case class NumberOfCards(n: Int)
 
-case class Winner(player: Int)
+case class Winner(name: String)

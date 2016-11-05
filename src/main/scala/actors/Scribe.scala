@@ -1,12 +1,12 @@
 package actors
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
 import protocol.Winner
 
-class Scribe extends Actor {
+class Scribe extends Actor with ActorLogging {
   override def receive: Receive = {
-    case Winner(i) => {
-      println(s"And the winner is $i")
+    case Winner(name) => {
+      log.info("And the winner is {}", name)
       context.system.terminate
     }
   }
