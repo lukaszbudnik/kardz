@@ -10,9 +10,9 @@ import protocol.{Colour, Rank, Card}
 class GameEngineSpec extends Specification {
 
   "The GameEngine" should {
+
     "return 52 random cards" in {
       val cards = GameEngine.distribute
-      cards.foreach(println(_))
       cards must haveSize(52)
       }
 
@@ -22,7 +22,6 @@ class GameEngineSpec extends Specification {
       val card3 = Card(Rank.ACE, Colour.SPADES)
       val card4 = Card(Rank.TWO, Colour.DIAMONDS)
       val cards = Seq(Seq(card1), Seq(card2), Seq(card3), Seq(card4))
-      cards.foreach(println(_))
       val winner = GameEngine.winnerByCards(cards)
       winner must beEqualTo(Seq(2))
     }
@@ -33,7 +32,6 @@ class GameEngineSpec extends Specification {
       val card3 = Card(Rank.ACE, Colour.SPADES)
       val card4 = Card(Rank.ACE, Colour.DIAMONDS)
       val cards = Seq(Seq(card1), Seq(card2), Seq(card3), Seq(card4))
-      cards.foreach(println(_))
       val winner = GameEngine.winnerByCards(cards)
       winner must beEqualTo(Seq(0,2,3))
     }
@@ -49,7 +47,6 @@ class GameEngineSpec extends Specification {
       val card4b = Card(Rank.JACK, Colour.DIAMONDS)
 
       val cards = Seq(Seq(card1, card1b), Seq(card2), Seq(card3, card3b), Seq(card4, card4b))
-      cards.foreach(println(_))
       val winner = GameEngine.winnerByCards(cards)
       winner must beEqualTo(Seq(3))
     }
@@ -65,7 +62,6 @@ class GameEngineSpec extends Specification {
       val card4b = Card(Rank.JACK, Colour.DIAMONDS)
 
       val cards = Seq(Seq(card1, card1b), Seq(card2), Seq(card3, card3b), Seq(card4, card4b))
-      cards.foreach(println(_))
       val winner = GameEngine.winnerByCards(cards)
       winner must beEqualTo(Seq(2,3))
     }
@@ -83,16 +79,20 @@ class GameEngineSpec extends Specification {
       val card3c = Card(Rank.FOUR, Colour.CLUBS)
 
       val cards = Seq(Seq(card1, card1b), Seq(card2), Seq(card3, card3b, card3c), Seq(card4, card4b))
-      cards.foreach(println(_))
       val winner = GameEngine.winnerByCards(cards)
       winner must beEqualTo(Seq(2))
     }
 
-    "return winner for list of number of cards" in {
+    "return one winner for list of number of cards" in {
       val cards = Seq(12, 23, 3, 6)
-      cards.foreach(println(_))
-      val winner = GameEngine.winnerByNumberOfCards(cards)
-      winner must beEqualTo(1)
+      val winners = GameEngine.winnerByNumberOfCards(cards)
+      winners must beEqualTo(Seq(1))
+    }
+
+    "return many winners for list of number of cards" in {
+      val cards = Seq(12, 23, 3, 23)
+      val winners = GameEngine.winnerByNumberOfCards(cards)
+      winners must beEqualTo(Seq(1, 3))
     }
   }
 

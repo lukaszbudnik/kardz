@@ -33,8 +33,6 @@ class RefereeSpec extends Specification {
 
         val refereeRef = TestActorRef(Props(new Referee(Seq(p1.ref, p2.ref, p3.ref), testActor)))
 
-        println(refereeRef)
-
         // simulate player 2 ran out of cards
         // explicit ! method invocation with sender param
         refereeRef.!(NoCard)(p2.ref)
@@ -49,8 +47,6 @@ class RefereeSpec extends Specification {
         val listener = TestProbe()
 
         val refereeRef = TestActorRef(Props(new Referee(Seq(p1.ref, p2.ref, p3.ref), listener.ref)))
-
-        println(refereeRef)
 
         // simulate players 1 & 2 ran out of cards
         refereeRef.tell(NoCard, p1.ref)

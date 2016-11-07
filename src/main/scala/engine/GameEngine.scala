@@ -57,9 +57,19 @@ object GameEngine {
     }
   }
 
-  def winnerByNumberOfCards(numberOfCards: Seq[Int]): Int = {
+  def winnerByNumberOfCards(numberOfCards: Seq[Int]): Seq[Int] = {
     val max = numberOfCards.max
-    numberOfCards.indexOf(max)
+    numberOfCards.zipWithIndex.filter {
+      case (n, i) => {
+        if (n == max) {
+          true
+        } else {
+          false
+        }
+      }
+    }.map {
+      case (n, i) => i
+    }
   }
 
 }

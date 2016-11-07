@@ -1,10 +1,12 @@
 package actors
 
-import akka.actor.{ActorRef, Actor, ActorLogging}
+import akka.actor.{ActorRef, Actor, ActorLogging, OneForOneStrategy, SupervisorStrategy}
+import akka.actor.SupervisorStrategy._
 import engine.GameEngine
 import protocol._
 
 import scala.collection.mutable
+import scala.concurrent.duration._
 
 class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with ActorLogging {
 
@@ -17,6 +19,10 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
   var atWarCounter = 0
   var currentWarRound: mutable.Map[ActorRef, Int] = mutable.Map()
   var finished = false
+
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1.second) {
+    case _: Exception => Restart
+  }
 
   override def receive: Receive = {
     case Distribute => {
@@ -65,8 +71,10 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
       cardsCount += (sender -> n)
       if (cardsCount.size == activePlayers.size) {
         log.info("Checking number of cards for {}", cardsCount)
-        val index = GameEngine.winnerByNumberOfCards(cardsCount.values.toSeq)
-        listener ! Winner(cardsCount.keys.toSeq(index).path.toString)
+        val indexes = GameEngine.winnerByNumberOfCards(cardsCount.values.toSeq)
+        indexes.foreach { i =>
+          listener ! Winner(cardsCount.keys.toSeq(i).path.toString)
+        }
       }
     }
     case Check if !finished && ((activePlayers.size == currentRound.size && atWarCounter == 0) || (currentWarRound.values.sum / 2 == atWarCounter && atWarCounter > 0)) => {
