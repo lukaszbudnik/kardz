@@ -1,7 +1,7 @@
 package actors
 
 import java.util
-import java.util.Collections
+import java.util.{Random, Collections}
 import java.util.concurrent.LinkedBlockingQueue
 
 import akka.actor.{Actor, ActorLogging}
@@ -24,6 +24,7 @@ object Persistence {
 }
 
 class Player extends Actor with ActorLogging {
+  val random: Random = new Random()
   var receivingCards: util.List[Card] = new util.ArrayList()
   var cards: util.Queue[Card] = new LinkedBlockingQueue()
 
@@ -35,8 +36,8 @@ class Player extends Actor with ActorLogging {
     }
     case AskForCard => {
 
-      val r = new java.util.Random()
-      if (r.nextInt(50) == 49) {
+      val fail = randomFailure()
+      if (fail) {
         throw new RuntimeException("kaboom")
       }
 
@@ -50,6 +51,10 @@ class Player extends Actor with ActorLogging {
       sender ! GiveCard(cards.poll())
     }
 
+  }
+
+  def randomFailure(): Boolean = {
+    random.nextInt(50) == 49
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {

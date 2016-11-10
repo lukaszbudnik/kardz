@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'idea'
     id 'scala'
+    id 'org.scoverage' version '2.1.0'
 }
 
 group = 'com.github.lukaszbudnik.kardz'
@@ -13,11 +14,9 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
-
     maven {
         url 'http://repository.apache.org/content/repositories/snapshots'
     }
-
 }
 
 dependencies {
@@ -28,11 +27,13 @@ dependencies {
 
     testCompile 'org.specs2:specs2-core_2.11:3.7.1'
     testCompile 'org.specs2:specs2-junit_2.11:3.7.1'
+
+    scoverage 'org.scoverage:scalac-scoverage-plugin_2.11:1.2.0', 'org.scoverage:scalac-scoverage-runtime_2.11:1.2.0'
 }
 
 tasks.withType(Test) {
     testLogging {
-        events 'failed', 'passed'
-        showStandardStreams true
+        events 'failed', 'skipped', 'passed'
+        showStandardStreams false
     }
 }

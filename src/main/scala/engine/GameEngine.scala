@@ -52,7 +52,6 @@ object GameEngine {
       val winners = maxCards.map { c =>
         lastCards.indexOf(c)
       }
-
       winners
     }
   }

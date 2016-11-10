@@ -28,11 +28,13 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
     case Distribute => {
       log.info("About to distribute cards to {} players", players.size)
       val cards: Seq[Card] = GameEngine.distribute
-      for (i <- 0 until cards.size) {
-        val player = activePlayers(i % players.size)
-        val card = cards(i)
-        log.debug("Sending {} to {}", card, player)
-        player ! GiveCard(card)
+      cards.zipWithIndex.foreach {
+        case (c, i) => {
+          val player = activePlayers(i % players.size)
+          val card = cards(i)
+          log.debug("Sending {} to {}", card, player)
+          player ! GiveCard(card)
+        }
       }
     }
     case Start => {
@@ -51,23 +53,26 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
 
     }
     case GiveCard(c) => {
+      // when at war, Players are sending more cards thus the currentRound is a map of [ActorRef, Seq[Card]]
       if (currentRound.keys.exists(_ == sender)) {
         currentRound += (sender -> currentRound(sender).:+(c))
-      } else {
-        currentRound += (sender -> Seq(c))
-      }
-      if (atWarCounter > 0) {
+
         log.debug("At war. Player {} sent {}", sender, c)
+
+        // at war Players are expected to send 2 additional Cards - count them
         if (currentWarRound.keys.exists(_ == sender)) {
           currentWarRound += (sender -> 2)
         } else {
           currentWarRound += (sender -> 1)
         }
+
+      } else {
+        currentRound += (sender -> Seq(c))
       }
 
       self ! Check
     }
-    case NumberOfCards(n) => {
+    case NumberOfCards(n) if roundCounter == maxRounds => {
       cardsCount += (sender -> n)
       if (cardsCount.size == activePlayers.size) {
         log.info("Checking number of cards for {}", cardsCount)
@@ -103,7 +108,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
         val cardsFlatten = cards.flatten.toList
 
         if (atWarCounter > 0) {
-          log.info("War is over. Player {} takes {}", winner, cardsFlatten)
+          log.info("War is over. Player {} takes {} cards", winner, cardsFlatten.size)
         }
 
         if (activePlayers.size == 1) {
@@ -128,6 +133,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
     val action = if (roundCounter == maxRounds) {
       CountCards
     } else {
+      roundCounter += 1
       AskForCard
     }
 
@@ -136,7 +142,7 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
     currentRound = currentRound.empty
     currentWarRound = currentWarRound.empty
     atWarCounter = 0
-    roundCounter += 1
+
   }
 
 }

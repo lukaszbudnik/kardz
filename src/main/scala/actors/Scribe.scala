@@ -7,7 +7,6 @@ class Scribe extends Actor with ActorLogging {
   override def receive: Receive = {
     case Winner(name) => {
       log.info("And the winner is {}", name)
-      context.system.terminate
     }
   }
 }
