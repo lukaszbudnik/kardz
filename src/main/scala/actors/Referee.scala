@@ -26,14 +26,13 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
 
   override def receive: Receive = {
     case Distribute => {
-      log.info("About to distribute cards to {} players", players.size)
+      log.info("About to distribute cards to {}", players)
       val cards: Seq[Card] = GameEngine.distribute
       cards.zipWithIndex.foreach {
         case (c, i) => {
           val player = activePlayers(i % players.size)
-          val card = cards(i)
-          log.debug("Sending {} to {}", card, player)
-          player ! GiveCard(card)
+          log.debug("Sending {} to {}", c, player)
+          player ! GiveCard(c)
         }
       }
     }
@@ -42,34 +41,26 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
     }
     case NoCard => {
       log.info("Player {} sent NoCard in round {}", sender, roundCounter)
-
       activePlayers = activePlayers.filterNot(_ == sender)
-
       if (atWarCounter > 0) {
         currentWarRound += (sender -> 2)
       }
-
       self ! Check
-
     }
     case GiveCard(c) => {
       // when at war, Players are sending more cards thus the currentRound is a map of [ActorRef, Seq[Card]]
       if (currentRound.keys.exists(_ == sender)) {
         currentRound += (sender -> currentRound(sender).:+(c))
-
         log.debug("At war. Player {} sent {}", sender, c)
-
         // at war Players are expected to send 2 additional Cards - count them
         if (currentWarRound.keys.exists(_ == sender)) {
           currentWarRound += (sender -> 2)
         } else {
           currentWarRound += (sender -> 1)
         }
-
       } else {
         currentRound += (sender -> Seq(c))
       }
-
       self ! Check
     }
     case NumberOfCards(n) if roundCounter == maxRounds => {
@@ -82,67 +73,49 @@ class Referee(players: Seq[ActorRef], listener: ActorRef) extends Actor with Act
         }
       }
     }
+    case Check if !finished && activePlayers.size == 1 => {
+      val winner = activePlayers.head
+      log.info("Last player standing {} in round {}", winner, roundCounter)
+      finished = true
+      listener ! Winner(activePlayers.head.path.toString)
+    }
     case Check if !finished && ((activePlayers.size == currentRound.size && atWarCounter == 0) || (currentWarRound.values.sum / 2 == atWarCounter && atWarCounter > 0)) => {
       val cards = currentRound.values.toSeq
-
       val index = GameEngine.winnerByCards(cards)
-
       if (index.size > 1) {
         atWarCounter = index.size
         currentWarRound = currentWarRound.empty
-        log.info("War in round {} between {}", roundCounter, currentRound.keys.zipWithIndex.filter {
-          case (p, i) if index.contains(i)  => {
-            true
-          }
-          case _ => false
-        }.map {
-          case (p, i) => p
-        }.toList)
+        log.info("War in round {} between {}", roundCounter, index.map(currentRound.keys.toSeq(_)))
         index.map(currentRound.keys.toSeq(_)).foreach(p => {
           p ! AskForCard
           p ! AskForCard
         })
       } else {
         val winner = currentRound.keys.toSeq(index.head)
-
         val cardsFlatten = cards.flatten.toList
-
-        if (atWarCounter > 0) {
-          log.info("War is over. Player {} takes {} cards", winner, cardsFlatten.size)
-        }
-
-        if (activePlayers.size == 1) {
-          log.info("Last player standing {} in round {}", winner, roundCounter)
-          finished = true
-          listener ! Winner(activePlayers.head.path.toString)
-        } else {
-          sendCards(winner, cardsFlatten)
-        }
+        finaliseRound(winner, cardsFlatten)
       }
     }
   }
 
-  def sendCards(winner: ActorRef, cards: Seq[Card]): Unit = {
-
-    cards.foreach(c => winner ! GiveCard(c))
-
-    if (roundCounter % 50 == 0) {
-      log.info("Round {} winner {} takes {}", roundCounter, winner, cards)
+  def finaliseRound(winner: ActorRef, cards: Seq[Card]): Unit = {
+    cards.foreach(winner ! GiveCard(_))
+    if (atWarCounter > 0) {
+      log.info("War is over. Player {} takes {} cards", winner, cards.size)
     }
-
+    if (roundCounter % 50 == 0) {
+      log.debug("Round {} winner {} takes {}", roundCounter, winner, cards)
+    }
     val action = if (roundCounter == maxRounds) {
       CountCards
     } else {
       roundCounter += 1
       AskForCard
     }
-
-    activePlayers.foreach(p => p ! action)
-
+    activePlayers.foreach(_ ! action)
     currentRound = currentRound.empty
     currentWarRound = currentWarRound.empty
     atWarCounter = 0
-
   }
 
 }
